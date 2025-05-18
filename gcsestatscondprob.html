@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>GCSE Conditional Probability Practice</title>
+  <style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+  body {
+    font-family: 'Montserrat', sans-serif;
+    background: linear-gradient(135deg, #161efa 0%, #764ba2 100%);
+    margin: 10;
+    padding: 2rem;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  .container {
+    background: white;
+    color: #222;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    max-width: 650px;
+    width: 100%;
+    padding: 2rem;
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: #f6fefa;
+  }
+
+  #question {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 10rem;
+  }
+
+  label {
+    font-weight: 600;
+    display: block;
+  margin-bottom: 0.3rem;
+      color: #dfd;
+  }
+
+  input[type="text"] {
+    font-size: 1.1rem;
+    width: 100%;
+    max-width: 250px;
+    padding: 0.5rem 0.75rem;
+    border: 2px solid #764ba2;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    outline-offset: 2px;
+    transition: border-color 0.3s;
+  }
+
+  input[type="text"]:focus {
+    border-color: #667eea;
+  }
+
+  button {
+    cursor: pointer;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border: none;
+    padding: 0.6rem 1.3rem;
+    color: white;
+    font-weight: 700;
+    border-radius: 10px;
+    margin-right: 0.75rem;
+    box-shadow: 0 4px 15px rgba(102,126,234,0.5);
+    transition: background 0.3s ease;
+  }
+  button:hover {
+    background: linear-gradient(90deg, #764ba2, #667eea);
+  }
+
+  button.reset-btn {
+    background: #dc3545;
+    box-shadow: 0 4px 15px rgba(220,53,69,0.5);
+  }
+  button.reset-btn:hover {
+    background: #b72b3b;
+  }
+
+  #feedback {
+    margin-top: 1rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    min-height: 1.5rem;
+    transition: color 0.3s;
+  }
+  #feedback.correct {
+    color: #28a745;
+    text-shadow: 0 0 7px #28a745bb;
+  }
+  #feedback.incorrect {
+    color: #dc3545;
+    text-shadow: 0 0 7px #dc3545bb;
+  }
+  #feedback.warning {
+    color: #ffb300;
+  }
+
+  #explanation, #hint {
+    margin-top: 1rem;
+    background: #f4f4ff;
+    color: #333;
+    padding: 1rem 1.2rem;
+    border-left: 5px solid #764ba2;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    user-select: text;
+  }
+  #hint {
+    border-color: #667eea;
+    font-style: italic;
+  }
+
+  #score {
+    margin-top: 1.6rem;
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: #dfd;
+    text-align: center;
+    user-select: none;
+    text-shadow: 0 0 6px #764ba2aa;
+  }
+
+  /* Confetti canvas */
+  #confetti-canvas {
+    pointer-events: none;
+    position: fixed;
+    top: -50; left: 50;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+  }
+  </style>
+</head>
+<body>
+
+  <div class="question-block">
+  <h1>GCSE Conditional Probability Practice</h1>
+  <p>
+    Click the button to generate a new question. Use "Hint" if you're stuck.
+    After answering, check the full explanation.
+  </p>
+    <div id="question"></div>
+
+    <label for="userAnswer">Your answer (decimal or % as needed): </label>
+    <input type="text" id="userAnswer" />
+    <br />
+    <button onclick="checkAnswer()">Check Answer</button>
+    <button onclick="showHint()">Hint</button>
+    <button onclick="generateQuestion()">🆕 New Question</button>
+
+    <div id="feedback"></div>
+    <div id="explanation"></div>
+    <div id="hint"></div>
+    <div id="score"></div>
+  </div>
+
+  <script>
+    let correctAnswer = 0;
+    let explanationText = "";
+    let hintText = "";
+    let totalStudents = 100;
+
+    // Score tracking
+    let totalAnswered = 0;
+    let totalCorrect = 0;
+    let answeredCurrent = false; // To prevent multiple scoring per question
+
+    function generateQuestion() {
+      const questionTypes = [
+        generateType1,
+        generateType2,
+        generateType3,
+        generateType4,
+        generateType5,
+        generateType6,
+        generateType7,
+        generateType8,
+        generateType9,
+        generateType10,
+        generateType11,
+        generateType13,
+        generateType14,
+        generateType15,
+    ];
+      const randomIndex = Math.floor(Math.random() * questionTypes.length);
+      totalStudents = Math.floor(Math.random() * 71) + 80; // Random total between 80 and 150
+      questionTypes[randomIndex]();
+
+      document.getElementById("userAnswer").value = "";
+      document.getElementById("feedback").innerText = "";
+      document.getElementById("explanation").innerText = "";
+      document.getElementById("hint").innerText = "";
+      answeredCurrent = false; // Reset for new question
+    }
+
+    function checkAnswer() {
+      const userVal = parseFloat(document.getElementById("userAnswer").value);
+      const feedback = document.getElementById("feedback");
+      const explanation = document.getElementById("explanation");
+      const score = document.getElementById("score");
+
+      if (isNaN(userVal)) {
+        feedback.innerText = "⚠️ Please enter a valid number.";
+        return;
+      }
+
+      // Only update score once per question
+      if (!answeredCurrent) {
+        totalAnswered++;
+        if (Math.abs(userVal - correctAnswer) < 0.01) {
+          feedback.innerText = "✅ Correct!";
+          totalCorrect++;
+        } else {
+          feedback.innerText = `❌ Incorrect. The correct answer is ${correctAnswer}`;
+        }
+        answeredCurrent = true;
+      } else {
+        // If user tries to check answer again, just show feedback/explanation again
+        feedback.innerText =
+          Math.abs(userVal - correctAnswer) < 0.01
+            ? "✅ Correct!"
+            : `❌ Incorrect. The correct answer is ${correctAnswer}`;
+      }
+
+      explanation.innerHTML = explanationText;
+      score.innerText = `Score: ${totalCorrect} / ${totalAnswered}`;
+    }
+
+    function showHint() {
+      document.getElementById("hint").innerHTML = `<strong>Hint:</strong><br>${hintText}`;
+    }
+
+    // ----------------- Question Generators ------------------
+
+    function generateType1() {
+      // Conditional Probability P(B|A) = P(A∩B) / P(A)
+      let A = Math.floor(Math.random() * 30 + 40);
+      let both = Math.floor(Math.random() * Math.min(25, A));
+      let B = Math.floor(Math.random() * 30 + 20);
+
+      correctAnswer = (both / A).toFixed(2);
+      hintText = "P(B | A) = P(A and B) ÷ P(A)";
+
+      document.getElementById("question").innerHTML = `
+        In a group of ${totalStudents} students:<br>
+        - ${A} like History<br>
+        - ${B} like Geography<br>
+        - ${both} like both<br><br>
+        What is the probability that a student likes <strong>Geography</strong>, given that they like <strong>History</strong>? (2 decimal places)
+      `;
+      explanationText = `
+        <strong>Explanation:</strong><br>
+        P(Geography | History) = P(History ∩ Geography) / P(History)<br>
+        = ${both}/${A} = ${(both / A).toFixed(4)} → <strong>${correctAnswer}</strong>
+      `;
+    }
+
+    function generateType2() {
+      // Non-mutually exclusive P(A ∪ B) = P(A) + P(B) - P(A ∩ B)
+      let A = Math.floor(Math.random() * 30 + 30);
+      let B = Math.floor(Math.random() * 30 + 30);
+      let both = Math.floor(Math.random() * Math.min(25, A, B));
+      correctAnswer = ((A + B - both) / totalStudents).toFixed(2);
+      hintText = "P(A or B) = P(A) + P(B) − P(A and B)";
+
+      document.getElementById("question").innerHTML = `
+        In a group of ${totalStudents} students:<br>
+        - ${A} like dogs<br>
+        - ${B} like cats<br>
+        - ${both} like both<br><br>
+        What is the probability a student likes <strong>dogs or cats</strong>? (2 decimal places)
+      `;
+      explanationText = `
+        <strong>Explanation:</strong><br>
+        P(Dogs ∪ Cats) = (${A}/${totalStudents}) + (${B}/${totalStudents}) − (${both}/${totalStudents})<br>
+        = ${A + B - both} / ${totalStudents} = <strong>${correctAnswer}</strong>
+      `;
+    }
+
+    function generateType3() {
+      // Total probability from partitions
+      let red = Math.floor(totalStudents * (Math.random() * 0.3 + 0.3)); // 30–60%
+      let blue = totalStudents - red;
+      let pDefRed = (Math.floor(Math.random() * 6 + 5)) / 100;
+      let pDefBlue = (Math.floor(Math.random() * 6 + 5)) / 100;
+      correctAnswer = ((red / totalStudents * pDefRed) + (blue / totalStudents * pDefBlue)).toFixed(2);
+      hintText = "P(Defective) = P(Red)×P(Def|Red) + P(Blue)×P(Def|Blue)";
+
+      document.getElementById("question").innerHTML = `
+        A factory makes ${totalStudents} items: ${red} are red, the rest blue.<br>
+        - ${Math.round(pDefRed * 100)}% of red items are defective<br>
+        - ${Math.round(pDefBlue * 100)}% of blue items are defective<br><br>
+        What is the probability a randomly chosen item is defective? (2 decimal places)
+      `;
+      explanationText = `
+        <strong>Explanation:</strong><br>
+        Total probability = P(Red)×P(Def|Red) + P(Blue)×P(Def|Blue)<br>
+        = (${red}/${totalStudents})×${pDefRed.toFixed(2)} + (${blue}/${totalStudents})×${pDefBlue.toFixed(2)}<br>
+        = <strong>${correctAnswer}</strong>
+      `;
+    }
+
+    function generateType4() {
+      // Tree diagram style sequential
+      let pA = (Math.floor(Math.random() * 6 + 5)) / 10;
+      let pBgivenA = (Math.floor(Math.random() * 6 + 3)) / 10;
+      correctAnswer = (pA * pBgivenA).toFixed(2);
+      hintText = "P(A and B) = P(A) × P(B given A)";
+
+      document.getElementById("question").innerHTML = `
+        In a competition:<br>
+        - P(Win round 1) = ${pA.toFixed(1)}<br>
+        - If win round 1, P(Win round 2) = ${pBgivenA.toFixed(1)}<br><br>
+        What is the probability of winning <strong>both rounds</strong>?
+      `;
+      explanationText = `
+        <strong>Explanation:</strong><br>
+        Multiply along tree path: ${pA.toFixed(1)} × ${pBgivenA.toFixed(1)} = <strong>${correctAnswer}</strong>
+      `;
+    }
+
+    function generateType5() {
+      // Complement rule question
+      let pFault = (Math.floor(Math.random() * 4 + 2)) / 10; // 0.2 to 0.5
+      correctAnswer = (1 - Math.pow(1 - pFault, 2)).toFixed(2);
+      hintText = "P(At least one) = 1 − P(None) = 1 − (1 − p)²";
+
+      document.getElementById("question").innerHTML = `
+        A machine has a ${pFault.toFixed(2)} probability of failing.<br>
+        Two machines are tested.<br><br>
+        What is the probability that <strong>at least one fails</strong>? (2 decimal places)
+      `;
+
+      explanationText = `
+        <strong>Step 1: Understand "at least one fails"</strong><br>
+        "At least one" means either one or both machines fail. It’s easier to calculate the opposite (complement):<br>
+        → Probability that <em>neither fails</em> (i.e. both work).<br><br>
+
+        <strong>Step 2: Use the Complement Rule</strong><br>
+        P(at least one fails) = 1 − P(none fail)<br><br>
+
+        <strong>Step 3: Calculate P(none fail)</strong><br>
+        If P(fail) = ${pFault.toFixed(2)}, then<br>
+        P(not fail) = 1 − ${pFault.toFixed(2)} = ${(1 - pFault).toFixed(2)}<br>
+        P(both work) = ${(1 - pFault).toFixed(2)} × ${(1 - pFault).toFixed(2)} = ${(Math.pow(
+        1 - pFault,
+        2
+      )).toFixed(4)}<br><br>
+
+        <strong>Step 4: Final Answer</strong><br>
+        P(at least one fails) = 1 − ${(Math.pow(1 - pFault, 2)).toFixed(4)} = <strong>${correctAnswer}</strong><br><br>
+
+        <em>🧠 Tip:</em> For "at least one" questions, the complement rule is often the fastest method!
+      `;
+    }
+
+	//function questionBayesTheoremBasic() {
+    function generateType6() {	
+  let pA = +(Math.random() * 0.5 + 0.3).toFixed(2);
+  let pBgivenA = +(Math.random() * 0.7 + 0.1).toFixed(2);
+  let pBgivenNotA = +(Math.random() * 0.7 + 0.1).toFixed(2);
+  let pNotA = +(1 - pA).toFixed(2);
+  
+  // P(A|B) = P(B|A)*P(A) / [P(B|A)*P(A) + P(B|¬A)*P(¬A)]
+  correctAnswer = +((pBgivenA * pA) / (pBgivenA * pA + pBgivenNotA * pNotA)).toFixed(2);
+
+      document.getElementById("question").innerHTML = `
+    Event A has probability ${pA}.<br>
+    Probability of B given A is ${pBgivenA}.<br>
+    Probability of B given not A is ${pBgivenNotA}.<br><br>
+    What is the probability of A given B? (2 decimal places)
+  `;
+
+  hintText = "Bayes' theorem: P(A|B) = [P(B|A)×P(A)] / [P(B|A)×P(A) + P(B|¬A)×P(¬A)]";
+
+  explanationText = `
+    <strong>Explanation:</strong><br>
+    Use Bayes theorem:<br>
+    P(A|B) = (P(B|A)×P(A)) / (P(B|A)×P(A) + P(B|¬A)×P(¬A))<br>
+    = (${pBgivenA} × ${pA}) / (${pBgivenA} × ${pA} + ${pBgivenNotA} × ${pNotA}) = <strong>${correctAnswer}</strong>
+  `;
+    }
+    
+//function questionIndependentBoth() {
+    function generateType7() {	
+    let pA = +(Math.random() * 0.6 + 0.2).toFixed(2);
+  let pB = +(Math.random() * 0.6 + 0.2).toFixed(2);
+
+  // For independent: P(A and B) = P(A) * P(B)
+  correctAnswer = +(pA * pB).toFixed(2);
+
+  document.getElementById("question").innerHTML = `
+    Two independent events A and B have probabilities ${pA} and ${pB}.<br><br>
+    What is the probability that both A and B occur? (2 decimal places)
+  `;
+
+  hintText = "For independent events: P(A and B) = P(A) × P(B)";
+
+  explanationText = `
+    <strong>Explanation:</strong><br>
+    Since A and B are independent, P(A and B) = P(A) × P(B)<br>
+    = ${pA} × ${pB} = <strong>${correctAnswer}</strong>
+  `;
+}
+
+//    function questionExactlyTwoFailures() {
+    function generateType8() {	    
+  let pFail = +(Math.random() * 0.5 + 0.1).toFixed(2);
+  let n = 3;
+  // P(exactly 2 fail) = C(3,2) * pFail^2 * (1-pFail)^1
+  let combinations = 3; // C(3,2)
+  correctAnswer = +(combinations * Math.pow(pFail, 2) * Math.pow(1 - pFail, 1)).toFixed(3);
+
+  document.getElementById("question").innerHTML = `
+    A machine has a failure probability of ${pFail}.<br>
+    Three machines are tested.<br><br>
+    What is the probability that exactly two machines fail? (3 decimal places)
+  `;
+
+  hintText = "Use binomial formula: P(k failures) = C(n,k) × p^k × (1-p)^{n-k}";
+
+  explanationText = `
+    <strong>Explanation:</strong><br>
+    Number of ways = C(3,2) = 3<br>
+    Probability = 3 × (${pFail})² × (1 - ${pFail})<br>
+    = <strong>${correctAnswer}</strong>
+  `;
+}
+
+    //    function questionComplementConditional() {
+    function generateType9() {	    
+  let pA = +(Math.random() * 0.5 + 0.3).toFixed(2);
+  let pBgivenA = +(Math.random() * 0.7 + 0.1).toFixed(2);
+  let pBgivenNotA = +(Math.random() * 0.7 + 0.1).toFixed(2);
+  let pNotA = +(1 - pA).toFixed(2);
+
+  correctAnswer = +((1 - (pA * pBgivenA + pNotA * pBgivenNotA))).toFixed(2);
+
+  document.getElementById("question").innerHTML = `
+    Event A has probability ${pA}.<br>
+    Probability of B given A is ${pBgivenA}.<br>
+    Probability of B given not A is ${pBgivenNotA}.<br><br>
+    What is the probability that event B does <strong>not</strong> occur? (2 decimal places)
+  `;
+
+  hintText = "P(not B) = 1 - P(B), where P(B) = total probability of B";
+
+  explanationText = `
+    <strong>Explanation:</strong><br>
+    First find P(B):<br>
+    P(B) = P(A)×P(B|A) + P(not A)×P(B|not A) = ${pA}×${pBgivenA} + ${pNotA}×${pBgivenNotA} = ${(pA * pBgivenA + pNotA * pBgivenNotA).toFixed(4)}<br>
+    So, P(not B) = 1 - P(B) = <strong>${correctAnswer}</strong>
+  `;
+}
+
+//    function questionChainRule() {
+    function generateType10() {	    
+  let pA = +(Math.random() * 0.7 + 0.1).toFixed(2);
+  let pBgivenA = +(Math.random() * 0.7 + 0.1).toFixed(2);
+  let pCgivenAB = +(Math.random() * 0.7 + 0.1).toFixed(2);
+
+  correctAnswer = +(pA * pBgivenA * pCgivenAB).toFixed(3);
+
+  document.getElementById("question").innerHTML = `
+    Event A has probability ${pA}.<br>
+    Probability of B given A is ${pBgivenA}.<br>
+    Probability of C given A and B is ${pCgivenAB}.<br><br>
+    What is the probability that all three events A, B, and C occur? (3 decimal places)
+  `;
+
+  hintText = "Chain rule: P(A and B and C) = P(A)×P(B|A)×P(C|A and B)";
+
+  explanationText = `
+    <strong>Explanation:</strong><br>
+    P(A and B and C) = P(A) × P(B|A) × P(C|A and B)<br>
+    = ${pA} × ${pBgivenA} × ${pCgivenAB} = <strong>${correctAnswer}</strong>
+  `;
+}
+
+    //    function questionAtLeastTwoSuccesses() {
+    function generateType11() {	    
+  let p = +(Math.random() * 0.5 + 0.3).toFixed(2);
+  let n = 4;
+
+  // P(at least 2) = 1 - P(0) - P(1)
+  let p0 = Math.pow(1 - p, n);
+  let p1 = n * p * Math.pow(1 - p, n - 1);
+  correctAnswer = +(1 - p0 - p1).toFixed(3);
+
+  document.getElementById("question").innerHTML = `
+    Probability of success on a single trial is ${p}.<br>
+    Four independent trials are conducted.<br><br>
+    What is the probability of at least two successes? (3 decimal places)
+  `;
+
+  hintText = "Use complement: P(≥2) = 1 - P(0) - P(1)";
+
+  explanationText = `
+    <strong>Explanation:</strong><br>
+    P(0 successes) = (1 - ${p})^4 = ${p0.toFixed(4)}<br>
+    P(1 success) = 4 × ${p} × (1 - ${p})^3 = ${p1.toFixed(4)}<br>
+    P(≥2 successes) = 1 - ${p0.toFixed(4)} - ${p1.toFixed(4)} = <strong>${correctAnswer}</strong>
+  `;
+}
+
+//    function questionConditionalDisjoint() {    
+    function generateType13() {						    
+  let A = Math.floor(Math.random() * 40) + 40;
+  let B = Math.floor(Math.random() * 40) + 40;
+  let both = 0; // Disjoint means no overlap
+
+  correctAnswer = 0;
+
+  document.getElementById("question").innerHTML = `
+    In a group of ${totalStudents} students:<br>
+    - ${A} like event A<br>
+    - ${B} like event B<br>
+    - ${both} like both A and B (disjoint)<br><br>
+    What is the probability that a student likes event B given that they like event A? (2 decimal places)
+  `;
+
+  hintText = "For disjoint events, P(B|A) = 0";
+
+  explanationText = `
+    <strong>Explanation:</strong><br>
+    Since the events are disjoint (no overlap), P(A and B) = 0.<br>
+    Therefore, P(B|A) = P(A and B) / P(A) = 0.
+  `;
+}
+
+    //function questionJointThreeEvents() {
+    function generateType14() {	    
+  let A = Math.floor(Math.random() * 50) + 40;
+  let B = Math.floor(Math.random() * 50) + 40;
+  let C = Math.floor(Math.random() * 50) + 40;
+  let AB = Math.floor(Math.min(A, B) * Math.random() * 0.6);
+  let BC = Math.floor(Math.min(B, C) * Math.random() * 0.6);
+  let AC = Math.floor(Math.min(A, C) * Math.random() * 0.6);
+  let ABC = Math.floor(Math.min(AB, AC, BC) * Math.random() * 0.7);
+
+  correctAnswer = +(ABC / totalStudents).toFixed(3);
+
+  document.getElementById("question").innerHTML = `
+    In a group of ${totalStudents} students:<br>
+    ${A} like A<br>
+    ${B} like B<br>
+    ${C} like C<br>
+    ${AB} like both A and B<br>
+    ${BC} like both B and C<br>
+    ${AC} like both A and C<br>
+    ${ABC} like all three events<br><br>
+    What is the probability that a student likes all three events? (3 decimal places)
+  `;
+
+  hintText = "P(all three) = Number who like all three ÷ total";
+
+  explanationText = `
+    <strong>Explanation:</strong><br>
+    Probability = ${ABC} ÷ ${totalStudents} = <strong>${correctAnswer}</strong>
+  `;
+}
+
+    //function questionAtLeastOneN() {
+    function generateType15() {	    
+  let p = +(Math.random() * 0.5 + 0.3).toFixed(2);
+  let n = Math.floor(Math.random() * 5) + 2; // between 2 and 6
+
+  correctAnswer = +(1 - Math.pow(1 - p, n)).toFixed(3);
+
+  document.getElementById("question").innerHTML = `
+    The probability of success on a single trial is ${p}.<br>
+    ${n} independent trials are conducted.<br><br>
+    What is the probability of at least one success? (3 decimal places)
+  `;
+
+  hintText = "P(at least one) = 1 - P(none) = 1 - (1-p)^n";
+
+  explanationText = `
+    <strong>Explanation:</strong><br>
+    Probability none succeed = (1 - ${p})^${n} = ${(1 - p).toFixed(4)}^${n} = ${(Math.pow(1 - p, n)).toFixed(4)}<br>
+    So probability at least one succeeds = 1 - ${(Math.pow(1 - p, n)).toFixed(4)} = <strong>${correctAnswer}</strong>
+  `;
+}
+    
+    // Start with a question when page loads
+    generateQuestion();
+  </script>
+</body>
+</html>
