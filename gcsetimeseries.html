@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GCSE Time Series Quiz - Calculations Only</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef2f5;
+      padding: 40px;
+    }
+    .quiz-container {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #333;
+    }
+    #score-display {
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #007acc;
+    }
+    input[type="number"] {
+      padding: 5px;
+      font-size: 1rem;
+      margin-top: 10px;
+    }
+    button {
+      background: #007acc;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+      margin-right: 10px;
+    }
+    .feedback {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    .hint, .solution {
+      background-color: #f0f0f0;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="quiz-container">
+  <h2>GCSE Time Series Quiz (Calculations Only)</h2>
+  <div id="score-display">Score: 0 / 0</div>
+  <div id="question-container"></div>
+  <div class="hint" id="hint-box"></div>
+  <div class="solution" id="solution-box"></div>
+  <button onclick="showHint()">Hint</button>
+  <button onclick="submitAnswer()">Submit</button>
+  <button onclick="nextQuestion()" id="nextBtn" style="display:none;">Next</button>
+  <div class="feedback" id="feedback"></div>
+</div>
+
+<script>
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+let score = 0, answered = 0, currentQ = null;
+
+function updateScore() {
+  document.getElementById("score-display").textContent = `Score: ${score} / ${answered}`;
+}
+
+function generateQuestion() {
+    const types = ["seasonalAdjustedForecast", "movingAverage", "movingAverage4", "forecast", "interpolation", "extrapolation", "seasonalIndex", "trendRate", "lineEquation", "estimateFromLine", "correlationCalc","pmcc","pmccRawData","spearmanRank"];
+//    const types = ["pmccRawData"];
+  const type = types[Math.floor(Math.random() * types.length)];
+  let question = "", answer = 0, hint = "", solution = "";
+
+  if (type === "movingAverage") {
+    const data = Array.from({ length: 3 }, () => getRandomInt(50, 150));
+    const avg = data.reduce((a, b) => a + b, 0) / 3;
+    question = `Calculate the 3-point moving average for: ${data.join(", ")}`;
+    answer = avg.toFixed(2);
+    hint = "Use (x₁ + x₂ + x₃) / 3";
+      solution = `(${data.join(" + ")}) / 3 = ${answer}`;
+} else if (type === "spearmanRank") {
+  const n = 6;
+  const xVals = [];
+  const yVals = [];
+
+  // Generate random values with some relationship (but not necessarily linear)
+  for (let i = 0; i < n; i++) {
+    xVals.push(getRandomInt(10, 50));
+    yVals.push(getRandomInt(10, 50));
+  }
+
+  // Function to get ranks (handling ties by average rank)
+  function getRanks(arr) {
+    const sorted = [...arr].sort((a, b) => a - b);
+    return arr.map(v => {
+      // Find all indices with same value (tie)
+      const indices = sorted.reduce((acc, val, idx) => val === v ? acc.concat(idx + 1) : acc, []);
+      // Average rank if tie
+      return indices.reduce((a,b) => a + b, 0) / indices.length;
+    });
+  }
+
+  const rankX = getRanks(xVals);
+  const rankY = getRanks(yVals);
+
+  // Calculate d and d^2
+  const dSquared = rankX.map((r, i) => (r - rankY[i]) ** 2);
+  const sumDSq = dSquared.reduce((a, b) => a + b, 0);
+
+  // Spearman’s rank correlation coefficient formula
+  const rs = (1 - (6 * sumDSq) / (n * (n * n - 1))).toFixed(3);
+
+  question = `Given the following data:<br>
+X: [${xVals.join(", ")}]<br>
+Y: [${yVals.join(", ")}]<br>
+Calculate Spearman's rank correlation coefficient (rₛ) to 3 decimal places.<br>
+(You will need to rank the data, find the differences in ranks, square them, then use the formula.)`;
+
+  answer = rs;
+  hint = `1. Assign ranks to X and Y (average ranks for ties).<br>
+2. Calculate d = rank(X) - rank(Y) for each pair.<br>
+3. Calculate d² and sum them.<br>
+4. Use formula: rₛ = 1 - [6 Σd²] / [n(n² - 1)]`;
+
+  solution = `
+    Ranks of X: [${rankX.map(r => r.toFixed(1)).join(", ")}]<br>
+    Ranks of Y: [${rankY.map(r => r.toFixed(1)).join(", ")}]<br>
+    Differences (d): [${rankX.map((r,i) => (r - rankY[i]).toFixed(1)).join(", ")}]<br>
+    d²: [${dSquared.join(", ")}], Σd² = ${sumDSq}<br><br>
+    rₛ = 1 - (6 × ${sumDSq}) / (${n} × (${n}² - 1)) = ${rs}
+  `;      
+} else if (type === "pmcc") {
+  const n = 6;
+  const sumX = getRandomInt(100, 150);
+  const sumY = getRandomInt(120, 180);
+  const sumXY = getRandomInt(2500, 4000);
+  const sumX2 = sumX * sumX / n + getRandomInt(10, 100);
+  const sumY2 = sumY * sumY / n + getRandomInt(10, 100);
+
+  const numerator = n * sumXY - sumX * sumY;
+  const denominator = Math.sqrt(
+    (n * sumX2 - sumX ** 2) * (n * sumY2 - sumY ** 2)
+  );
+  const r = (numerator / denominator).toFixed(3);
+
+  question = `Given the summary statistics:<br>
+  - n = ${n}<br>
+  - Σx = ${sumX}, Σy = ${sumY}, Σxy = ${sumXY}, Σx² = ${sumX2.toFixed(0)}, Σy² = ${sumY2.toFixed(0)}<br>
+  Calculate the **Pearson product moment correlation coefficient (r)** to 3 decimal places.`;
+
+  answer = r;
+  hint = "Use the formula:<br>" +
+         "r = [nΣxy - ΣxΣy] / sqrt([nΣx² - (Σx)²][nΣy² - (Σy)²])";
+  solution = `
+    Numerator = ${n} × ${sumXY} - ${sumX} × ${sumY} = ${numerator}<br>
+    Denominator = √[${n} × ${sumX2.toFixed(0)} - (${sumX})²] × [${n} × ${sumY2.toFixed(0)} - (${sumY})²] = ${denominator.toFixed(3)}<br>
+    r = ${numerator} / ${denominator.toFixed(3)} = ${r}
+`;
+} else if (type === "pmccRawData") {
+  // Generate raw data points (5 pairs)
+  const n = 5;
+  const xVals = [];
+  const yVals = [];
+  
+  for (let i = 0; i < n; i++) {
+    const x = getRandomInt(10, 30);
+    // y loosely correlated to x with some noise
+    const y = Math.round(x * getRandomInt(2, 4) + getRandomInt(-10, 10));
+    xVals.push(x);
+    yVals.push(y);
+  }
+
+  // Calculate summary stats
+  const sumX = xVals.reduce((a,b) => a + b, 0);
+  const sumY = yVals.reduce((a,b) => a + b, 0);
+  const sumXY = xVals.reduce((acc, _, i) => acc + xVals[i] * yVals[i], 0);
+  const sumX2 = xVals.reduce((acc, v) => acc + v * v, 0);
+  const sumY2 = yVals.reduce((acc, v) => acc + v * v, 0);
+
+  // Calculate numerator and denominator for PMCC
+  const numerator = n * sumXY - sumX * sumY;
+  const denominator = Math.sqrt((n * sumX2 - sumX ** 2) * (n * sumY2 - sumY ** 2));
+  const r = numerator / denominator;
+
+  question = `Given the following paired data:<br>
+  X: [${xVals.join(", ")}]<br>
+  Y: [${yVals.join(", ")}]<br>
+  Calculate the Pearson product moment correlation coefficient (r) to 3 decimal places.
+  (You may need to find Σx, Σy, Σxy, Σx², and Σy² first.)`;
+
+  answer = r.toFixed(3);
+  hint = `Use the formula:<br>r = [nΣxy - ΣxΣy] / sqrt([nΣx² - (Σx)²][nΣy² - (Σy)²])<br>Calculate each sum first.`;
+  solution = `
+    n = ${n}<br>
+    Σx = ${sumX}, Σy = ${sumY}<br>
+    Σxy = ${sumXY}, Σx² = ${sumX2}, Σy² = ${sumY2}<br><br>
+    Numerator = ${n} × ${sumXY} - ${sumX} × ${sumY} = ${numerator}<br>
+    Denominator = √[${n} × ${sumX2} - (${sumX})²] × [${n} × ${sumY2} - (${sumY})²] = ${denominator.toFixed(3)}<br>
+    r = ${numerator} / ${denominator.toFixed(3)} = ${r.toFixed(3)}
+  `;
+} else if (type === "correlationCalc") {
+  const xVals = [];
+  const yVals = [];
+  const n = 5;
+
+  for (let i = 0; i < n; i++) {
+    const x = getRandomInt(2, 10);
+    const y = x * getRandomInt(2, 4) + getRandomInt(-3, 3); // Some correlation
+    xVals.push(x);
+    yVals.push(y);
+  }
+
+  const mean = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+  const meanX = mean(xVals);
+  const meanY = mean(yVals);
+
+  const std = (arr, meanVal) =>
+    Math.sqrt(arr.map(v => (v - meanVal) ** 2).reduce((a, b) => a + b) / arr.length);
+  const stdX = std(xVals, meanX);
+  const stdY = std(yVals, meanY);
+
+  const zScoresX = xVals.map(x => (x - meanX) / stdX);
+  const zScoresY = yVals.map(y => (y - meanY) / stdY);
+
+  const rNumerator = zScoresX.map((z, i) => z * zScoresY[i]).reduce((a, b) => a + b, 0);
+  const r = (rNumerator / n).toFixed(2);
+
+  question = `Given the following paired data:<br>X = [${xVals.join(", ")}]<br>Y = [${yVals.join(", ")}]<br>Calculate the **Pearson correlation coefficient (r)** to 2 decimal places.`;
+  answer = r;
+  hint = `1. Find means of X and Y<br>2. Convert to z-scores<br>3. Use r = Σ(zₓ × zᵧ) / n`;
+  solution = `Mean of X = ${meanX.toFixed(2)}, Y = ${meanY.toFixed(2)}<br>` +
+             `Standard deviation X = ${stdX.toFixed(2)}, Y = ${stdY.toFixed(2)}<br>` +
+             `r = (Σ(zₓ × zᵧ)) / ${n} = ${r}`;      
+} else if (type === "estimateFromLine") {
+  const a = getRandomInt(30, 60);
+  const b = getRandomInt(2, 5);
+  const x = getRandomInt(5, 20);
+  const y = a + b * x;
+
+  question = `Using the line of best fit: y = ${a} + ${b}x, estimate y when x = ${x}`;
+  answer = y.toFixed(2);
+  hint = "Substitute x into y = a + bx";
+  solution = `y = ${a} + ${b} × ${x} = ${y}`;
+      
+} else if (type === "lineEquation") {
+  const x1 = getRandomInt(1, 5);
+  const x2 = x1 + getRandomInt(3, 6);
+  const y1 = getRandomInt(20, 40);
+  const y2 = y1 + getRandomInt(10, 30);
+  const b = (y2 - y1) / (x2 - x1);
+  const a = y1 - b * x1;
+
+  question = `Find the equation of the line passing through (x=${x1}, y=${y1}) and (x=${x2}, y=${y2}) in the form y = a + bx.`;
+  answer = `y = ${a.toFixed(2)} + ${b.toFixed(2)}x`;
+  hint = "Find gradient b = (y₂ - y₁)/(x₂ - x₁), then a = y - bx";
+  solution = `b = (${y2} - ${y1}) / (${x2} - ${x1}) = ${b.toFixed(2)}, a = ${y1} - ${b.toFixed(2)}×${x1} = ${a.toFixed(2)}<br>So y = ${a.toFixed(2)} + ${b.toFixed(2)}x`;
+
+  } else if (type === "movingAverage4") {
+    const data = Array.from({ length: 5 }, () => getRandomInt(50, 150));
+    const first = data.slice(0, 4).reduce((a, b) => a + b, 0);
+    const second = data.slice(1, 5).reduce((a, b) => a + b, 0);
+    const centered = (first + second) / 8;
+    question = `Calculate the centered 4-point moving average for data: ${data.join(", ")}`;
+    answer = centered.toFixed(2);
+    hint = "Average of two consecutive 4-point averages, divided by 8.";
+    solution = `First 4: ${data.slice(0, 4).join(" + ")} = ${first}, Next 4: ${data.slice(1, 5).join(" + ")} = ${second}<br>
+                Centered = (${first} + ${second}) / 8 = ${answer}`;
+  } else if (type === "seasonalAdjustedForecast") {
+    const base = getRandomInt(80, 120);
+    const rate = getRandomInt(2, 6); // trend growth per period
+    const periodsAhead = getRandomInt(1, 4);
+    const seasonalIndex = (Math.random() * 0.3 + 0.85).toFixed(2); // between 0.85 and 1.15
+
+    const trendForecast = base + rate * periodsAhead;
+    const adjustedForecast = trendForecast * parseFloat(seasonalIndex);
+
+    question = `Base value = ${base}, Trend increases by ${rate} per period. Forecast for ${periodsAhead} periods ahead. Seasonal Index = ${seasonalIndex}. Find the **seasonally adjusted forecast**.`;
+    answer = adjustedForecast.toFixed(2);
+    hint = "Use: (Base + rate × periods ahead) × Seasonal Index";
+    solution = `Trend forecast = ${base} + ${rate} × ${periodsAhead} = ${trendForecast}<br>` +
+               `Adjusted = ${trendForecast} × ${seasonalIndex} = ${answer}`;
+
+  } else if (type === "forecast") {
+    const a = getRandomInt(60, 100);
+    const d = getRandomInt(2, 10);
+    const series = [a, a + d, a + 2 * d];
+    const next = a + 3 * d;
+    question = `Given values: ${series.join(", ")}, forecast the next value assuming a linear trend.`;
+    answer = next;
+    hint = "Add the common difference to the last value.";
+    solution = `Common difference = ${d}, so next = ${series[2]} + ${d} = ${next}`;
+
+  } else if (type === "interpolation") {
+    const x1 = getRandomInt(1, 5);
+    const x2 = x1 + 2;
+    const y1 = getRandomInt(100, 150);
+    const y2 = y1 + getRandomInt(10, 30);
+    const x = x1 + 1;
+    const y = y1 + ((y2 - y1) / (x2 - x1)) * (x - x1);
+    question = `Interpolate y at x = ${x} using (x=${x1}, y=${y1}) and (x=${x2}, y=${y2})`;
+    answer = y.toFixed(2);
+    hint = "Use y = y₁ + ((y₂ - y₁)/(x₂ - x₁)) * (x - x₁)";
+    solution = `${y1} + ((${y2}-${y1})/(${x2}-${x1})) * (${x}-${x1}) = ${answer}`;
+
+  } else if (type === "extrapolation") {
+    const x1 = getRandomInt(1, 4);
+    const x2 = x1 + 2;
+    const x3 = x2 + 1;
+    const y1 = getRandomInt(80, 130);
+    const y2 = y1 + getRandomInt(10, 30);
+    const y = y1 + ((y2 - y1) / (x2 - x1)) * (x3 - x1);
+    question = `Extrapolate y at x = ${x3} using (x=${x1}, y=${y1}) and (x=${x2}, y=${y2})`;
+    answer = y.toFixed(2);
+    hint = "Same formula as interpolation — linear trend.";
+    solution = `${y1} + ((${y2}-${y1})/(${x2}-${x1})) * (${x3}-${x1}) = ${answer}`;
+
+  } else if (type === "seasonalIndex") {
+    const observed = getRandomInt(110, 160);
+    const seasonalIndex = (Math.random() * 0.4 + 0.8).toFixed(2); // Between 0.80 and 1.20
+    const deseasonalised = observed / seasonalIndex;
+    question = `Observed = ${observed}, Seasonal Index = ${seasonalIndex}. Find deseasonalised value.`;
+    answer = deseasonalised.toFixed(2);
+    hint = "Deseasonalised = Observed ÷ Seasonal Index";
+    solution = `${observed} ÷ ${seasonalIndex} = ${answer}`;
+
+  } else if (type === "trendRate") {
+    const x1 = getRandomInt(1, 3);
+    const x2 = x1 + 3;
+    const y1 = getRandomInt(100, 140);
+    const y2 = y1 + getRandomInt(20, 60);
+    const rate = (y2 - y1) / (x2 - x1);
+    question = `Find the rate of change per period from (x=${x1}, y=${y1}) to (x=${x2}, y=${y2}).`;
+    answer = rate.toFixed(2);
+    hint = "Rate = (y₂ - y₁) / (x₂ - x₁)";
+    solution = `(${y2} - ${y1}) / (${x2} - ${x1}) = ${answer}`;
+  }
+
+  return { question, answer, hint, solution };
+}
+
+function showQuestion() {
+  currentQ = generateQuestion();
+  document.getElementById("question-container").innerHTML = `
+    <p>${currentQ.question}</p>
+    <input type="number" id="userAnswer" step="0.01" required>
+  `;
+  document.getElementById("hint-box").style.display = "none";
+  document.getElementById("hint-box").innerHTML = "";
+  document.getElementById("solution-box").style.display = "none";
+  document.getElementById("solution-box").innerHTML = "";
+  document.getElementById("feedback").innerHTML = "";
+  document.getElementById("nextBtn").style.display = "none";
+}
+
+function showHint() {
+  document.getElementById("hint-box").style.display = "block";
+  document.getElementById("hint-box").innerHTML = `<strong>Hint:</strong> ${currentQ.hint}`;
+}
+
+function submitAnswer() {
+  const userVal = parseFloat(document.getElementById("userAnswer").value);
+  if (isNaN(userVal)) return;
+  answered++;
+  const correct = Math.abs(userVal - parseFloat(currentQ.answer)) < 0.05;
+  if (correct) score++;
+  updateScore();
+  document.getElementById("feedback").textContent = correct ? "✅ Correct!" : `❌ Incorrect. Answer: ${currentQ.answer}`;
+  document.getElementById("feedback").style.color = correct ? "green" : "darkred";
+  document.getElementById("solution-box").style.display = "block";
+  document.getElementById("solution-box").innerHTML = `<strong>Solution:</strong><br>${currentQ.solution}`;
+  document.getElementById("nextBtn").style.display = "inline-block";
+}
+
+function nextQuestion() {
+  showQuestion();
+}
+
+updateScore();
+showQuestion();
+</script>
+
+</body>
+</html>
