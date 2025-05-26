@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GCSE Binomial Quiz</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef2f5;
+      padding: 40px;
+    }
+    .quiz-container {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    #score-display {
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #007acc;
+    }
+    input[type="number"] {
+      padding: 5px;
+      font-size: 1rem;
+      margin-top: 10px;
+    }
+    button {
+      background: #007acc;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+      margin-right: 10px;
+    }
+    .feedback {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    .hint, .solution {
+      background-color: #f0f0f0;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+      display: none;
+    }
+  </style>
+<!--  <script id="MathJax-script" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['\\[','\\]']]}
+});
+</script>-->
+</head>
+<body>
+
+<div class="quiz-container">
+  <h2>Binomial Distribution Quiz</h2>
+  <div id="score-display">Score: 0 / 0</div>
+  <div id="question-container"></div>
+  <div class="hint" id="hint-box"></div>
+  <div class="solution" id="solution-box"></div>
+  <button onclick="showHint()">Hint</button>
+  <button onclick="submitAnswer()">Submit</button>
+  <button onclick="nextQuestion()" id="nextBtn" style="display:none;">Next</button>
+  <div class="feedback" id="feedback"></div>
+</div>
+
+<script>
+  function factorial(n) {
+    return n <= 1 ? 1 : n * factorial(n - 1);
+  }
+
+  function nCr(n, r) {
+    return factorial(n) / (factorial(r) * factorial(n - r));
+  }
+
+  function binomialProbability(n, r, p) {
+    return nCr(n, r) * Math.pow(p, r) * Math.pow(1 - p, n - r);
+  }
+
+  function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  let score = 0, answered = 0, currentQ = null;
+
+  function updateScore() {
+    document.getElementById("score-display").textContent = `Score: ${score} / ${answered}`;
+  }
+
+  function generateQuestion() {
+  //    const types = ["exact", "atMost", "atLeast", "between", "mean", "sd"];
+//      const types = [ "shopatleast" ]; //bloodgroupatleast" ];
+      const types = [ "exact", "atMost", "atLeast", "between", "mean", "sd",
+      "expectedCompare", "wordProblem", "computeravailable",
+ "bloodgroupatleast", "bloodgroupatmost", "bloodgroupexact",
+	"computeravailableexactly","computeravailablemore",
+      "shopexact","shopatleast"
+    ];      
+    const type = types[Math.floor(Math.random() * types.length)];
+    const n = getRandomInt(5, 10);
+    const p = [0.2, 0.3, 0.4, 0.5, 0.6][getRandomInt(0, 4)];
+
+    let question = "", answer = 0, hint = "", solution = "";
+
+    if (type === "exact") {
+      const x = getRandomInt(0, n);
+      answer = binomialProbability(n, x, p).toFixed(4);
+      question = `X ~ B(${n}, ${p}). Find P(X = ${x}).`;
+      hint = `Use P(X = x) = nCx * p^x * (1 - p)^(n - x)`;
+      solution = `n = ${n}, x = ${x}, p = ${p}<br>nCx = ${nCr(n,x).toFixed(0)}, p^x = ${Math.pow(p,x).toFixed(4)}, (1-p)^(n-x) = ${Math.pow(1-p,n-x).toFixed(4)}<br>P(X=${x}) = ${answer}`;
+
+    } else if (type === "atMost") {
+      const x = getRandomInt(1, n - 1);
+      answer = 0;
+      for (let i = 0; i <= x; i++) answer += binomialProbability(n, i, p);
+      answer = answer.toFixed(4);
+      question = `X ~ B(${n}, ${p}). Find P(X \u2264 ${x}).`;
+      hint = `Add P(X=0) to P(X=${x})`;
+      solution = `Sum of binomial probabilities from 0 to ${x}: ${answer}`;
+
+    } else if (type === "atLeast") {
+      const x = getRandomInt(1, n - 1);
+      let prob = 0;
+      for (let i = 0; i < x; i++) prob += binomialProbability(n, i, p);
+      answer = (1 - prob).toFixed(4);
+      question = `X ~ B(${n}, ${p}). Find P(X \u2265 ${x}).`;
+      hint = `Use complement: 1 - P(X < ${x})`;
+      solution = `1 - sum of P(X=i) from 0 to ${x - 1} = ${answer}`;
+
+    } else if (type === "between") {
+      let a = getRandomInt(1, n - 2), b = getRandomInt(a + 1, n - 1);
+      answer = 0;
+      for (let i = a; i <= b; i++) answer += binomialProbability(n, i, p);
+      answer = answer.toFixed(4);
+      question = `X ~ B(${n}, ${p}). Find P(${a} \u2264 X \u2264 ${b}).`;
+      hint = `Add up probabilities from P(X=${a}) to P(X=${b})`;
+      solution = `Sum from X=${a} to X=${b} = ${answer}`;
+
+    } else if (type === "mean") {
+      answer = (n * p).toFixed(2);
+      question = `X ~ B(${n}, ${p}). Find the expected value E(X).`;
+      hint = `Use E(X) = np`;
+      solution = `E(X) = ${n} * ${p} = ${answer}`;
+
+    } else if (type === "sd") {
+      answer = Math.sqrt(n * p * (1 - p)).toFixed(4);
+      question = `X ~ B(${n}, ${p}). Find the standard deviation.`;
+      hint = `Use SD = sqrt(np(1-p))`;
+      solution = `SD = sqrt(${n} * ${p} * ${1 - p}) = ${answer}`;
+  }  else if (type === "expectedCompare") {
+      // Compare expected vs actual defects
+      const defectProb = 0.04;
+      const batchSize = 200;
+      const expected = batchSize * defectProb;
+      const actual = getRandomInt(Math.max(0, expected - 5), expected + 10);
+      question = `A manufacturer expects 4% of items to be defective. Out of ${batchSize} items tested, ${actual} were defective.<br><br>What is the expected number of defective items? Enter your answer as a number.`;
+      answer = expected.toFixed(0);
+      hint = `Use expected = n × p.`;
+      solution = `Expected defective items = ${batchSize} × 0.04 = ${expected}`;
+
+    } else if (type === "wordProblem") {
+      // Word problem requiring calculation of probability
+      const totalTrials = getRandomInt(6, 10);
+      const successProb = p;
+      const x = getRandomInt(1, totalTrials);
+      const prob = binomialProbability(totalTrials, x, successProb);
+      answer = prob.toFixed(4);
+      question = `A basketball player has a 60% chance of scoring a free throw. They take ${totalTrials} shots.<br><br>What is the probability they score exactly ${x} shots? Enter your answer rounded to 4 decimal places.`;
+      hint = `Use binomial formula P(X = x) = nCx × p^x × (1-p)^{n-x}.`;
+      solution = `P(X = ${x}) = nCx × p^x × (1-p)^{n-x}<br>n = ${totalTrials}, x = ${x}, p = ${successProb}<br>P(X = ${x}) = ${answer}`;
+    }  else if (type === "computeravailableexactly") {
+      const totalTrials = getRandomInt(25, 35);
+      const successProb = p;
+      const x = getRandomInt(5, totalTrials-5);
+      const prob = binomialProbability(totalTrials, x, successProb);
+      answer = prob.toFixed(4);
+      question = `The probability that at least one computer is available at any time in a computer room is p = ${successProb}.<br><br> If someone makes ${totalTrials} visits to the cafe, what is the probability that, on entry, at least one computer is available on exactly ${x} occassions.?`;
+      hint = `Use binomial formula P(X = x) = nCx × p^x × (1-p)^{n-x}.`;
+      solution = `P(X = ${x}) = nCx × p^x × (1-p)^{n-x}<br>n = ${totalTrials}, x = ${x}, p = ${successProb}<br>P(X = ${x}) = ${answer}`;
+    } else if (type === "computeravailablemore") {
+	const totalTrials = getRandomInt(25, 35); //30
+	const successProb = p; //0.75
+	const x = getRandomInt(10,15);
+        answer = 0;
+        for (let i = 0; i <= totalTrials-x; i++) answer += binomialProbability(totalTrials, i, 1-successProb);
+        answer = answer.toFixed(4);
+        question = `The probability that at least one computer is available at any time in a computer room is p = ${successProb}.<br><br> If someone makes ${totalTrials} visits to the cafe, what is the probability that, on entry, at least one computer is available on ${x} or more occassions.?`;
+        hint = `Use P(Y\u2265 ${x}|n=${totalTrials},p=${successProb})=P(Y'\u2264 ${totalTrials-x}|n=${totalTrials},p=${1-successProb})<br> Alternatively, use<br> P(Y\u2265 ${x}|n=${totalTrials},p=${successProb})=1-P(Y\u2264 ${x-1}|n=${totalTrials},p=${successProb}).`;
+        solution = `P(X \u2265 ${x}) = \u2211 nCx × p^x × (1-p)^{n-x} for 0\u2264 x\u2264 ${totalTrials}-${x}<br>n = ${totalTrials}, 0\u2264 x\u2264 ${totalTrials}-${x}, p = 1-${successProb}<br>ANSWER = ${answer}`;
+    } else if (type === "bloodgroupexact") {
+	const totalTrials = getRandomInt(15, 35);
+	const successProb = 48/(48+35+12+5); //p;
+	const x = getRandomInt(5, totalTrials-5);
+      const prob = binomialProbability(totalTrials, x, successProb);
+      answer = prob.toFixed(4);
+	question = `The proportion of people with blood groups O, A, B and AB in a particular population are in the ratio 48:35:12:5 respectively.<br><br> Determine the probability that a random sample of ${totalTrials} people from the population contains exactly ${x} with blood group O.`;
+      hint = `Use binomial formula P(X = x) = nCx × p^x × (1-p)^{n-x}.`;
+      solution = `P(X = ${x}) = nCx × p^x × (1-p)^{n-x}<br>n = ${totalTrials}, x = ${x}, p = ${successProb}<br>P(X = ${x}) = ${answer}`;
+    } else if (type === "bloodgroupatmost") {
+	const totalTrials = getRandomInt(15, 35); //20
+	const successProb = 5/(48+35+12+5); //p;
+	const x = getRandomInt(1, 4); //2
+        answer = 0;
+        for (let i = 0; i <= x; i++) answer += binomialProbability(totalTrials, i, successProb);
+        answer = answer.toFixed(4);
+	question = `The proportion of people with blood groups O, A, B and AB in a particular population are in the ratio 48:35:12:5 respectively.<br>Determine the probability that a random sample of ${totalTrials} people from the population contains at most ${x} with blood group AB.`;
+	hint = `Use P(Y\u2264 ${x}|n=${totalTrials},p=${successProb})=\u2211 P(Y=y|n=${totalTrials},p=${successProb}) for 0\u2264 y\u2264 ${x}`;
+	solution = ` P(X \u2264 ${x}) = \u2211 nCx × p^x × (1-p)^{n-x},<br>n = ${totalTrials}, x = 0 to ${x}, p = ${successProb},<br> P(X \u2264 ${x}) = ${answer}`;
+    } else if (type === "bloodgroupatleast") {
+	const totalTrials = 20; //getRandomInt(15, 35); //20
+	const successProb = 35/(48+35+12+5); //p;
+	const x = 8; //getRandomInt(1, 4); //8
+        answer = 0;
+        for (let i = 0; i <= x-1; i++) answer += binomialProbability(totalTrials, i, successProb);
+	answer = 1 - answer;
+	answer = answer.toFixed(4);
+	question = `The proportion of people with blood groups O, A, B and AB in a particular population are in the ratio 48:35:12:5 respectively.<br>Determine the probability that a random sample of ${totalTrials} people from the population contains at least ${x} with blood group A.`;
+	//	hint = `Use P(Y\u2265 ${x}|n=${totalTrials},p=${successProb})=\u2211 P(Y=y|n=${totalTrials},p=${successProb}) for y\u2265 ${x}`;
+	hint = `Use P(Y\u2265 ${x})=1-P(Y\u2264 ${x-1})`;
+	solution = ` P(X \u2265 ${x}) = 1-\u2211 nCx × p^x × (1-p)^{n-x},<br>n = ${totalTrials}, x = 0 to ${x-1}, p = ${successProb},<br> P(X \u2264 ${x}) = ${answer}`;
+    } else if (type === "shopexact") {
+	const totalTrials = getRandomInt(4, 7);
+	const successProb = p;
+	const x = getRandomInt(2, totalTrials-2);
+      const prob = binomialProbability(totalTrials, x, successProb);
+      answer = prob.toFixed(4);
+	question = `A large shop has a loyalty card scheme. It is known that ${successProb*100}\% of customers have the loyalty card.<br> Determine the probability that, in a random sample of ${totalTrials} customers, exactly ${x} customers have the loyalty card.`; 
+      hint = `Use binomial formula P(X = x) = nCx × p^x × (1-p)^{n-x}.`;
+      solution = `P(X = ${x}) = nCx × p^x × (1-p)^{n-x}<br>n = ${totalTrials}, x = ${x}, p = ${successProb}<br>P(X = ${x}) = ${answer}`;
+    } else if (type === "shopatleast") {
+	const totalTrials = 40; //getRandomInt(15, 35); //20
+	const successProb = 0.85; //35/(48+35+12+5); //p;
+	const x = 30; //getRandomInt(1, 4); //8
+        answer = 0;
+        for (let i = 0; i <= totalTrials-x-1; i++) answer += binomialProbability(totalTrials, i, 1-successProb);
+        answer = answer.toFixed(4);
+	question = `A large shop has a loyalty card scheme. It is known that ${successProb*100}\% of customers have the loyalty card.<br> Determine the probability that, in a random sample of ${totalTrials} customers, more than ${x} customers have the loyalty card.`; 
+	hint = `Use P(Y\u2265 ${x+1}|n=${totalTrials},p=${successProb})=\u2211 P(Y=y|n=${totalTrials},p=${Math.round((1-successProb)*100,2)/100}) for 0\u2264 y\u2264 ${x}`;
+	solution = ` P(X > ${x}) = \u2211 nCx × p^x × (1-p)^{n-x},<br>n = ${totalTrials}, x = 0 to ${x}, p = 1-${successProb},<br> P(X \u2264 ${x}) = ${answer}`;
+    }    
+
+      
+    return { question, answer, hint, solution };
+  }
+
+  function showQuestion() {
+    currentQ = generateQuestion();
+    document.getElementById("question-container").innerHTML = `
+      <p>${currentQ.question}</p>
+      <input type="number" id="userAnswer" step="0.0001" required>
+    `;
+    document.getElementById("hint-box").style.display = "none";
+    document.getElementById("hint-box").innerHTML = "";
+    document.getElementById("solution-box").style.display = "none";
+    document.getElementById("solution-box").innerHTML = "";
+    document.getElementById("feedback").innerHTML = "";
+    document.getElementById("nextBtn").style.display = "none";
+  }
+
+  function showHint() {
+    document.getElementById("hint-box").style.display = "block";
+      document.getElementById("hint-box").innerHTML = `<strong>Hint:</strong> ${currentQ.hint}`;
+  }
+
+  function submitAnswer() {
+    const userVal = parseFloat(document.getElementById("userAnswer").value);
+    if (isNaN(userVal)) return;
+    answered++;
+    const correct = Math.abs(userVal - parseFloat(currentQ.answer)) < 0.001;
+    if (correct) score++;
+    updateScore();
+    document.getElementById("feedback").textContent = correct ? "✅ Correct!" : `❌ Incorrect. Answer: ${currentQ.answer}`;
+    document.getElementById("feedback").style.color = correct ? "green" : "darkred";
+    document.getElementById("solution-box").style.display = "block";
+    document.getElementById("solution-box").innerHTML = `<strong>Solution:</strong><br>${currentQ.solution}`;
+    document.getElementById("nextBtn").style.display = "inline-block";
+  }
+
+  function nextQuestion() {
+      showQuestion();
+  }
+
+  updateScore();
+  showQuestion();
+</script>
+
+</body>
+</html>
