@@ -106,7 +106,7 @@ MathJax.Hub.Config({
 	"computeravailableexactly","computeravailablemore",
       "shopexact","shopatleast"
     ];      
-      const type = types[8]; //types[Math.floor(Math.random() * types.length)];
+      const type = types[Math.floor(Math.random() * types.length)];
     const n = getRandomInt(5, 10);
     const p = [0.2, 0.3, 0.4, 0.5, 0.6][getRandomInt(0, 4)];
 
@@ -159,8 +159,8 @@ MathJax.Hub.Config({
       solution = `SD = sqrt(${n} * ${p} * ${1 - p}) = ${answer}`;
   }  else if (type === "expectedCompare") {
       // Compare expected vs actual defects
-      const defectProb = 0.04;
-      const batchSize = 200;
+      const defectProb = (p*p).toFixed(2);
+      const batchSize = getRandomInt(10, 20)*20;
       const expected = batchSize * defectProb;
       const actual = getRandomInt(Math.max(0, expected - 5), expected + 10);
       question = `A manufacturer expects 4% of items to be defective. Out of ${batchSize} items tested, ${actual} were defective.<br><br>What is the expected number of defective items? Enter your answer as a number.`;
@@ -217,9 +217,9 @@ MathJax.Hub.Config({
 	hint = `Use P(Y\u2264 ${x}|n=${totalTrials},p=${successProb})=\u2211 P(Y=y|n=${totalTrials},p=${successProb}) for 0\u2264 y\u2264 ${x}`;
 	solution = ` P(X \u2264 ${x}) = \u2211 nCx × p^x × (1-p)^{n-x},<br>n = ${totalTrials}, x = 0 to ${x}, p = ${successProb},<br> P(X \u2264 ${x}) = ${answer}`;
     } else if (type === "bloodgroupatleast") {
-	const totalTrials = 20; //getRandomInt(15, 35); //20
+	const totalTrials = getRandomInt(15, 35); //20
 	const successProb = 35/(48+35+12+5); //p;
-	const x = 8; //getRandomInt(1, 4); //8
+	const x = getRandomInt(1, 4); //8
         answer = 0;
         for (let i = 0; i <= x-1; i++) answer += binomialProbability(totalTrials, i, successProb);
 	answer = 1 - answer;
@@ -238,9 +238,9 @@ MathJax.Hub.Config({
       hint = `Use binomial formula P(X = x) = nCx × p^x × (1-p)^{n-x}.`;
       solution = `P(X = ${x}) = nCx × p^x × (1-p)^{n-x}<br>n = ${totalTrials}, x = ${x}, p = ${successProb}<br>P(X = ${x}) = ${answer}`;
     } else if (type === "shopatleast") {
-	const totalTrials = 40; //getRandomInt(15, 35); //20
-	const successProb = 0.85; //35/(48+35+12+5); //p;
-	const x = 30; //getRandomInt(1, 4); //8
+	const totalTrials = getRandomInt(30, 50); //20
+	const successProb = p; //35/(48+35+12+5); //p;
+	const x = totalTrials - getRandomInt(5, 10); //8
         answer = 0;
         for (let i = 0; i <= totalTrials-x-1; i++) answer += binomialProbability(totalTrials, i, 1-successProb);
         answer = answer.toFixed(4);
